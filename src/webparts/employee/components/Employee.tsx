@@ -37,7 +37,7 @@ export default class Employee extends React.Component<
     this.state = {
       listTitle: [],
       leaveSettings: [],
-      status: "approved",
+      status: "pending",
       sDate: "",
       emailCc: "",
       reason: "",
@@ -262,11 +262,16 @@ export default class Employee extends React.Component<
       option: IChoiceGroupOption
     ) => {
       console.dir(option);
-      this.setState({ leaveType: option.text }, () => {});
+
+      this.setState({ leaveType: option.text, submitSuccess: "" }, () => {
+        if (this.state.leaveType === "")
+          this.setState({ errorLeaveType: "Leave type can not be empty" });
+        else this.setState({ errorLeaveType: "" });
+      });
     };
 
     const changeStartDate = (e) => {
-      this.setState({ sDate: e.target.value }, () => {
+      this.setState({ sDate: e.target.value, submitSuccess: "" }, () => {
         var day = new Date(this.state.sDate).getUTCDay();
         console.log(day);
         if (day == 6 || day == 0) {
@@ -287,22 +292,27 @@ export default class Employee extends React.Component<
     };
 
     const changeEndDate = (e) => {
-      this.setState({ eDate: e.target.value, errorEndDate: "" }, () => {
-        var day = new Date(this.state.eDate).getUTCDay();
-        if (day == 6 || day == 0) {
-          this.setState({
-            errorEndDate: "End Date can't be assigned to Weekends",
-          });
-        } else if (this.state.publicHolidays.indexOf(this.state.eDate) != -1) {
-          this.setState({
-            errorEndDate: "End Date can't be assigned to public Holidays",
-          });
-        } else this.setState({ errorEndDate: "" });
-      });
+      this.setState(
+        { eDate: e.target.value, errorEndDate: "", submitSuccess: "" },
+        () => {
+          var day = new Date(this.state.eDate).getUTCDay();
+          if (day == 6 || day == 0) {
+            this.setState({
+              errorEndDate: "End Date can't be assigned to Weekends",
+            });
+          } else if (
+            this.state.publicHolidays.indexOf(this.state.eDate) != -1
+          ) {
+            this.setState({
+              errorEndDate: "End Date can't be assigned to public Holidays",
+            });
+          } else this.setState({ errorEndDate: "" });
+        }
+      );
     };
 
     const changeReason = (e) => {
-      this.setState({ reason: e.target.value }, () => {
+      this.setState({ reason: e.target.value, submitSuccess: "" }, () => {
         if (this.state.reason === "")
           this.setState({ errorReason: "Reason can not be empty" });
         else this.setState({ errorReason: "" });
@@ -310,28 +320,35 @@ export default class Employee extends React.Component<
     };
 
     const changeEmailCc = (e) => {
-      this.setState({ emailCc: e.target.value, errorEmail: "" }, () => {
-        if (
-          this.state.emailCc != "" &&
-          !regularExpression.test(this.state.emailCc)
-        )
-          this.setState({
-            errorEmail: "Enter Email in proper format or Leave it Blank",
-          });
-      });
+      this.setState(
+        { emailCc: e.target.value, errorEmail: "", submitSuccess: "" },
+        () => {
+          if (
+            this.state.emailCc != "" &&
+            !regularExpression.test(this.state.emailCc)
+          )
+            this.setState({
+              errorEmail: "Enter Email in proper format or Leave it Blank",
+            });
+        }
+      );
     };
 
-    const getCurrentDate = () => {
+    const getminDate = () => {
       var today = new Date();
-      var date =
-        today.getFullYear() +
-        "-" +
-        (today.getMonth() + 1) +
-        "-" +
-        today.getDate();
+
+      var date = today.getFullYear() + "-01-01";
+
       return date.toString();
     };
 
+    const getmaxDate = () => {
+      var today = new Date();
+
+      var date = today.getFullYear() + "-12-31";
+
+      return date.toString();
+    };
     const checkUser = escape(this.props.userid);
     // const LeaveType = this.state.leaveSettings.map(item => <p>{item.text}</p>);
     // const printHolidayName = this.state.listTitle.map(item => <p>{item.text}</p>);
@@ -427,7 +444,8 @@ export default class Employee extends React.Component<
                     </div>
                     <div className={styles.largeCol}>
                       <TextField
-                        min={format(getCurrentDate(), "YYYY-MM-DD")}
+                        min={format(getminDate(), "YYYY-MM-DD")}
+                        max={format(getmaxDate(), "YYYY-MM-DD")}
                         id="sDate"
                         onChange={changeStartDate}
                         type="date"
@@ -445,7 +463,9 @@ export default class Employee extends React.Component<
                     </div>
                     <div className={styles.largeCol}>
                       <TextField
+                        placeholder="DD-MM-YY"
                         min={format(this.state.sDate, "YYYY-MM-DD")}
+                        max={format(getmaxDate(), "YYYY-MM-DD")}
                         type="date"
                         required={true}
                         onChange={changeEndDate}
